@@ -1,4 +1,5 @@
 const { cpus } = require('os');
+const artifact = require('@actions/artifact');
 const { compile } = require('nexe');
 
 const getDestOS = (s) => {
@@ -37,6 +38,14 @@ const getDestCPU = (s) => {
     }
 };
 
+const getBinaryName = (os, cpu, version) => {
+    if (os === 'win') {
+        os = 'windows';
+    }
+
+    return `${os}-${cpu}-${version}`;
+};
+
 (async () => {
     const configure = [];
     /** @type {import('nexe/lib/options').NexePatch[]} */
@@ -45,35 +54,43 @@ const getDestCPU = (s) => {
     const destOS = getDestOS(process.env.BUILD_PLATFORM || process.platform);
     const destCPU = getDestCPU(process.env.BUILD_ARCH || process.arch);
 
-    if (process.env.BUILD_ARCH && process.env.BUILD_ARCH !== process.arch || process.env.BUILD_PLATFORM && process.env.BUILD_PLATFORM !== process.platform) {
-        configure.push(`--cross-compiling`);
-        configure.push(`--dest-os=${destOS}`);
+    // Currently, Node cannot be built for a different OS, only for a different architecture
+    if (process.env.BUILD_ARCH && process.env.BUILD_ARCH !== process.arch) {
+        if (process.arch !== 'x64' || destCPU !== 'x86') {
+            configure.push(`--cross-compiling`);
+        }
         // nexe will set --dest-cpu automatically
 
-        if (process.platform === 'linux' && process.env.BUILD_ARCH && process.env.BUILD_ARCH !== process.arch) {
-            if (destCPU === 'arm64') {
-                process.env['CC_host'] = 'gcc';
-                process.env['CXX_host'] = 'g++';
-                process.env['CC'] = 'aarch64-linux-gnu-gcc';
-                process.env['CXX'] = 'aarch64-linux-gnu-g++';
+        if (process.platform === 'linux' && destCPU === 'arm64') {
+            process.env['CC_host'] = 'gcc';
+            process.env['CXX_host'] = 'g++';
+            process.env['CC'] = 'aarch64-linux-gnu-gcc';
+            process.env['CXX'] = 'aarch64-linux-gnu-g++';
 
-                patches.push(async (compiler, next) => {
-                    await compiler.replaceInFileAsync('configure.py', `o['cflags']+=['-msign-return-address=all']`, `# o['cflags']+=['-msign-return-address=all']`);
-                    return next();
-                });
-            }
+            patches.push(async (compiler, next) => {
+                await compiler.replaceInFileAsync('configure.py', `o['cflags']+=['-msign-return-address=all']`, `# o['cflags']+=['-msign-return-address=all']`);
+                return next();
+            });
+        } else if (process.platform === 'darwin' && destCPU === 'arm64') {
+            process.env['CC_host'] = 'clang';
+            process.env['CXX_host'] = 'clang++';
+            process.env['CC'] = 'clang -target arm64-apple-darwin20.1.0';
+            process.env['CXX'] = 'clang++ -target arm64-apple-darwin20.1.0';
         }
 
-        if (destCPU === 'ia32' && destOS !== 'win') {
+        if (destCPU === 'x86' && destOS !== 'win') {
             configure.push('--openssl-no-asm');
         }
     }
 
-    compile({
+    const artifactName = getBinaryName(destOS, destCPU, process.env.BUILD_VERSION || process.versions.node);
+    const binaryName = `./${artifactName}${destOS === 'win' ? '.exe' : ''}`;
+
+    await compile({
         build: true,
         mangle: false,
         verbose: true,
-        output: `./${destOS}-${destCPU}-${process.versions.node}`,
+        output: binaryName,
         configure,
         make: ['-j' + cpus().length, 'V=1'],
         patches,
@@ -83,4 +100,16 @@ const getDestCPU = (s) => {
             arch: destCPU,
         }]
     });
+
+    if (process.env['GITHUB_TOKEN']) {
+        const artifactClient = artifact.create();
+        await artifactClient.uploadArtifact(
+            artifactName,
+            [binaryName],
+            __dirname,
+            {
+                continueOnError: true,
+            }
+        );
+    }
 })().catch((err) => console.error(err));
