@@ -45,8 +45,8 @@ const getDestCPU = (s) => {
 
     if (process.env.BUILD_ARCH && process.env.BUILD_ARCH !== process.arch || process.env.BUILD_PLATFORM && process.env.BUILD_PLATFORM !== process.platform) {
         configure.push(`--cross-compiling`);
-        configure.push(`--dest-os`, destOS);
-        configure.push(`--dest-cpu`, destCPU);
+        configure.push(`--dest-os=${destOS}`);
+        // nexe will set --dest-cpu automatically
 
         if (process.platform === 'linux' && process.env.BUILD_ARCH && process.env.BUILD_ARCH !== process.arch) {
             process.env['CC_host'] = 'gcc';
@@ -58,8 +58,11 @@ const getDestCPU = (s) => {
             } else if (destCPU === 'ia32') {
                 process.env['CC'] = 'i686-linux-gnu-gcc';
                 process.env['CXX'] = 'i686-linux-gnu-g++';
-                configure.push('--openssl-no-asm');
             }
+        }
+
+        if (destCPU === 'ia32') {
+            configure.push('--openssl-no-asm');
         }
     }
 
