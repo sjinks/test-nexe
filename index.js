@@ -64,7 +64,7 @@ const getDestCPU = (s) => {
             }
         }
 
-        if (destCPU === 'ia32') {
+        if (destCPU === 'ia32' && destOS !== 'win') {
             configure.push('--openssl-no-asm');
         }
     }
