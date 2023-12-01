@@ -20,13 +20,13 @@ const getDestOS = (s) => {
 const getDestCPU = (s) => {
     switch (s) {
         case 'arm64':
-        case 'ia32':
         case 'x64':
             return s;
 
+        case 'ia32':
         case 'x32':
         case 'x86':
-            return 'ia32';
+            return 'x86';
 
         case 'amd64':
         case 'x86_64':
