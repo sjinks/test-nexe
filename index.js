@@ -49,15 +49,11 @@ const getDestCPU = (s) => {
         // nexe will set --dest-cpu automatically
 
         if (process.platform === 'linux' && process.env.BUILD_ARCH && process.env.BUILD_ARCH !== process.arch) {
-            process.env['CC_host'] = 'gcc';
-            process.env['CXX_host'] = 'g++';
-
             if (destCPU === 'arm64') {
+                process.env['CC_host'] = 'gcc';
+                process.env['CXX_host'] = 'g++';
                 process.env['CC'] = 'aarch64-linux-gnu-gcc';
                 process.env['CXX'] = 'aarch64-linux-gnu-g++';
-            } else if (destCPU === 'ia32') {
-                process.env['CC'] = 'i686-linux-gnu-gcc';
-                process.env['CXX'] = 'i686-linux-gnu-g++';
             }
         }
 
