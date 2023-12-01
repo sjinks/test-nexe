@@ -58,6 +58,7 @@ const getDestCPU = (s) => {
             } else if (destCPU === 'ia32') {
                 process.env['CC'] = 'i686-linux-gnu-gcc';
                 process.env['CXX'] = 'i686-linux-gnu-g++';
+                configure.push('--openssl-no-asm');
             }
         }
     }
