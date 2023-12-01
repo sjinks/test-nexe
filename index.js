@@ -58,7 +58,7 @@ const getDestCPU = (s) => {
                 process.env['CXX'] = 'aarch64-linux-gnu-g++';
 
                 patches.push(async (compiler, next) => {
-                    await compiler.replaceInFileAsync('configure/py', `o['cflags']+=['-msign-return-address=all']`, `# o['cflags']+=['-msign-return-address=all']`);
+                    await compiler.replaceInFileAsync('configure.py', `o['cflags']+=['-msign-return-address=all']`, `# o['cflags']+=['-msign-return-address=all']`);
                     return next();
                 });
             }
