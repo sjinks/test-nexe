@@ -15,6 +15,5 @@ jobs:
         with:
           node-version: 'lts/*'
       - run: npm ci
-      - run: node -e 'console.log(`${process.platform}-${process.arch}-${process.versions.node}`)'
       - uses: ilammy/setup-nasm@321e6ed62a1fc77024a3bd853deb33645e8b22c4 # v1.4.0
       - run: node index.js
