@@ -39,6 +39,8 @@ const getDestCPU = (s) => {
 
 (async () => {
     const configure = [];
+    /** @type {import('nexe/lib/options').NexePatch[]} */
+    const patches = [];
 
     const destOS = getDestOS(process.env.BUILD_PLATFORM || process.platform);
     const destCPU = getDestCPU(process.env.BUILD_ARCH || process.arch);
@@ -54,6 +56,11 @@ const getDestCPU = (s) => {
                 process.env['CXX_host'] = 'g++';
                 process.env['CC'] = 'aarch64-linux-gnu-gcc';
                 process.env['CXX'] = 'aarch64-linux-gnu-g++';
+
+                patches.push(async (compiler, next) => {
+                    await compiler.replaceInFileAsync('configure/py', `o['cflags']+=['-msign-return-address=all']`, `# o['cflags']+=['-msign-return-address=all']`);
+                    return next();
+                });
             }
         }
 
@@ -69,6 +76,7 @@ const getDestCPU = (s) => {
         output: `./${destOS}-${destCPU}-${process.versions.node}`,
         configure,
         make: ['-j' + cpus().length, 'V=1'],
+        patches,
         targets: [{
             version: process.env.BUILD_VERSION || process.versions.node,
             platform: destOS,
