@@ -1,0 +1,20 @@
+name: Build Node.js (MacOS)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: actions/setup-node@8f152de45cc393bb48ce5d89d36b731f54556e65 # v4
+        with:
+          node-version: 'lts/*'
+      - run: npm ci
+      - run: node -e 'console.log(`${process.platform}-${process.arch}-${process.versions.node}`)'
+      - run: python -m pip install distutils
+      - run: node index.js
