@@ -47,7 +47,7 @@ const getBinaryName = (os, cpu, version) => {
 };
 
 (async () => {
-    const configure = [];
+    const configure = ['--without-inspector'];
     /** @type {import('nexe/lib/options').NexePatch[]} */
     const patches = [];
 
