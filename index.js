@@ -94,6 +94,7 @@ const getBinaryName = (os, cpu, version) => {
         configure,
         make: ['-j' + cpus().length, 'V=1'],
         patches,
+        temp: './tmp',
         targets: [{
             version: process.env.BUILD_VERSION || process.versions.node,
             platform: destOS,
